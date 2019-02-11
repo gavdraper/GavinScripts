@@ -1,31 +1,31 @@
 DECLARE @LowRPOWarning INT = 5
-DECLARE @MediumRPOWarning INT = 10
-DECLARE @HighRPOWarning INT = 15
+DECLARE @MediumRPOWarning INT = 20
+DECLARE @HighRPOWarning INT = 40
 
-;WITH LastRestores AS
-(
+;WITH
+    LastRestores
+    AS
+    (
+        SELECT
+            [d].[name] [Database],
+            bmf.physical_device_name [LastFileRestored],
+            bs.backup_start_date LastFileRestoredCreatedTime,
+            r.restore_date [DateRestored],
+            RowNum = ROW_NUMBER() OVER (PARTITION BY d.Name ORDER BY r.[restore_date] DESC)
+        FROM master.sys.databases d
+            INNER JOIN msdb.dbo.[restorehistory] r ON r.[destination_database_name] = d.Name
+            INNER JOIN msdb..backupset bs ON [r].[backup_set_id] = [bs].[backup_set_id]
+            INNER JOIN msdb..backupmediafamily bmf ON [bs].[media_set_id] = [bmf].[media_set_id]
+    )
 SELECT
-    [d].[name] [Database],
-    bmf.physical_device_name [LastFileRestored],
-    CONVERT(DATETIME,
-        STUFF(STUFF(STUFF(SUBSTRING(physical_device_name,LEN([physical_device_name])-17,14),13,0,':'),11,0,':'),9,0,' ') 
-    ) LastFileRestoredCreatedTime,
-    r.restore_date [DateRestored],        
-    RowNum = ROW_NUMBER() OVER (PARTITION BY d.Name ORDER BY r.[restore_date] DESC)
-FROM master.sys.databases d
-    INNER JOIN msdb.dbo.[restorehistory] r ON r.[destination_database_name] = d.Name
-    INNER JOIN msdb..backupset bs ON [r].[backup_set_id] = [bs].[backup_set_id]
-    INNER JOIN msdb..backupmediafamily bmf ON [bs].[media_set_id] = [bmf].[media_set_id] 
-)
-SELECT 
-     CASE WHEN DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) > @HighRPOWarning THEN 'RPO High Warning!'
-        WHEN DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) > @MediumRPOWarning THEN 'RPO Medium Warning!'
-        WHEN DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) > @LowRPOWarning THEN 'RPO Low Warning!'
+    [Database],
+    CASE WHEN DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) > @HighRPOWarning THEN 'RPO High Alert'
+        WHEN DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) > @MediumRPOWarning THEN 'RPO Medium Alert'
+        WHEN DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) > @LowRPOWarning THEN 'RPO Low Alert'
         ELSE 'RPO Good'
      END [Status],
-    [Database],
-    [LastFileRestored],
-    [LastFileRestoredCreatedTime],
-    [DateRestored]
+    CAST(DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) AS VARCHAR(20)) + ' Minute(s) Behind' RPO,
+    CAST(DATEDIFF(MINUTE, [DateRestored],GETDATE()) AS VARCHAR(20)) + ' Minute(s) Ago' Restores
 FROM [LastRestores]
 WHERE [RowNum] = 1
+
