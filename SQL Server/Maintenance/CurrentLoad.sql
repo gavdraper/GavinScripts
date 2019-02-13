@@ -32,6 +32,5 @@ FROM
     --CROSS APPLY sys.dm_exec_query_plan(r.plan_handle) AS pl
     CROSS APPLY sys.dm_exec_sql_text(r.plan_handle) AS [sql]
 WHERE   
-    r.[status] IN ('Suspended','Runnable','Running','Pending')
-    AND  s.login_name <> 'waverton\magnasqlservice'    
+    r.[status] IN ('Suspended','Runnable','Running','Pending')   
 ORDER BY r.total_elapsed_time DESC    
