@@ -61,7 +61,7 @@ WHERE
         OR ([now].[max_wait_time_ms] - ISNULL([before].max_wait_time_ms,0)) > 0
         OR ([now].[signal_wait_time_ms] - ISNULL([before].signal_wait_time_ms,0)) > 0 
     )
-
+ORDER BY  [now].[wait_time_ms] - ISNULL([before].wait_time_ms,0) DESC
 DROP TABLE #StartStats
 DROP TABLE #WaitTypesToIgnore
 
