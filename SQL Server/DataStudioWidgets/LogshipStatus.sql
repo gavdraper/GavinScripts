@@ -17,11 +17,6 @@ FROM master.sys.databases d
 )
 SELECT 
     [Database],
-    --  CASE WHEN DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) > @HighRPOWarning THEN 'RPO High Alert'
-    --     WHEN DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) > @MediumRPOWarning THEN 'RPO Medium Alert'
-    --     WHEN DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) > @LowRPOWarning THEN 'RPO Low Alert'
-    --     ELSE 'RPO Good'
-    --  END [Status],
      DATEDIFF(MINUTE,LastFileRestoredCreatedTime,GETDATE()) MinutesBehind,
      DATEDIFF(MINUTE, [DateRestored],GETDATE()) MinutesSinceLastRestore
 FROM [LastRestores]
