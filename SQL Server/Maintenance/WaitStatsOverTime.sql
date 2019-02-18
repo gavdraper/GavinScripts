@@ -1,3 +1,5 @@
+/* HH:MM:SS */
+DECLARE @DelayString NVARCHAR(8) = '00:00:05'
 SELECT * INTO #WaitTypesToIgnore
 FROM(
     SELECT 'SLEEP_TASK' AS WaitType
@@ -37,11 +39,13 @@ FROM(
 
 SELECT dm_os_wait_stats.* 
 INTO #StartStats
-FROM sys.dm_os_wait_stats
+FROM 
+    sys.dm_os_wait_stats
     LEFT JOIN #WaitTypesToIgnore ON dm_os_wait_stats.wait_type = #WaitTypesToIgnore.WaitType
-WHERE #WaitTypesToIgnore.WaitType IS NULL
+WHERE 
+    #WaitTypesToIgnore.WaitType IS NULL
 
-WAITFOR DELAY '00:00:05'
+WAITFOR DELAY @DelayString
 
 SELECT 
     [now].wait_type,
@@ -62,6 +66,3 @@ WHERE
         OR ([now].[signal_wait_time_ms] - ISNULL([before].signal_wait_time_ms,0)) > 0 
     )
 ORDER BY  [now].[wait_time_ms] - ISNULL([before].wait_time_ms,0) DESC
-DROP TABLE #StartStats
-DROP TABLE #WaitTypesToIgnore
-
