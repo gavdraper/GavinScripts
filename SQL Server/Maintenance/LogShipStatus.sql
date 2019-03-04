@@ -16,6 +16,7 @@ DECLARE @HighRPOWarning INT = 40
             INNER JOIN msdb.dbo.[restorehistory] r ON r.[destination_database_name] = d.Name
             INNER JOIN msdb..backupset bs ON [r].[backup_set_id] = [bs].[backup_set_id]
             INNER JOIN msdb..backupmediafamily bmf ON [bs].[media_set_id] = [bmf].[media_set_id]
+        WHERE d.recovery_model_desc = 'FULL'
     )
 SELECT
     [Database],
@@ -28,4 +29,3 @@ SELECT
     CAST(DATEDIFF(MINUTE, [DateRestored],GETDATE()) AS VARCHAR(20)) + ' Minute(s) Ago' Restores
 FROM [LastRestores]
 WHERE [RowNum] = 1
-
